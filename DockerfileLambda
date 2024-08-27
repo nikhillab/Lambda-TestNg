@@ -1,0 +1,30 @@
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:17
+
+COPY ssl/*.crt /opt/
+RUN keytool -import -noprompt -trustcacerts -alias RootCA -file /opt/RootCA.crt -storepass changeit -keystore /usr/lib/jvm/java-17-amazon-corretto/lib/security/cacerts
+
+RUN yum update -y
+RUN mkdir chrome
+COPY chrome/* /chrome/
+RUN yum install  /chrome/vulkan-filesystem-1.0.61.1-2.amzn2.noarch.rpm -y
+# RUN yum install  /chrome/vulkan-1.0.61.1-2.amzn2.x86_64.rpm -y
+RUN yum install  /chrome/google-chrome-stable-116.0.5845.96-1.x86_64.rpm -y
+
+RUN google-chrome-stable --version
+
+RUN cp /opt/RootCA.crt /etc/pki/ca-trust/source/anchors/
+RUN update-ca-trust force-enable
+RUN update-ca-trust extract
+
+WORKDIR /function
+RUN mkdir target/logs
+COPY src/main/resources/selenium/drivers/* ./src/main/resources/selenium/drivers/
+COPY target/dependency/*.jar ./
+COPY target/*.jar ./
+COPY lib/*.jar ./
+COPY environment/* ./environment
+
+# Set runtime interface client as default command for the container runtime
+ENTRYPOINT [ "/usr/bin/java", "-cp", "./*", "com.amazonaws.services.lambda.runtime.api.client.AWSLambda" ]
+# Pass the name of the function handler as an argument to the runtime
+CMD [ "org.lambda.testng.main.LambdaTestNgRunner::runTest" ]

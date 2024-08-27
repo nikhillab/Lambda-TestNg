@@ -1,0 +1,26 @@
+// * docker build --platform linux/amd64 -t lambdatestng:chrome .
+// * docker run --name test_lmd --rm -p 9000:8080 lambdatestng:chrome
+
+// docker build --platform linux/amd64 -t lambdatestng:chrome -f DockerfileLambda .
+
+
+curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"className" : "demo.runners.AAAALoginServiceTestRunner","environment" : {"environment.chrome.headless" : "true","environment.chrome.version" : "116","environment.id" : "INFRA","environment.pod.name" : "","environment.rerun.count" : "0","environment.hostname" : "","CONFIG.BASEPATH" : "environment/"}}'
+
+curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"uuid":"e912cb51-8ae1-4ebd-ae91-cd3f263ecfe8","className" : "demo.runners.AAAALoginServiceTestRunner","environment" : {"environment.chrome.version" : "116","environment.id" : "local","environment.hostname" : ""}}'
+
+curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"uuid":"e912cb51-8ae1-4ebd-ae91-cd3f263ecfe8","className" : "demo.runners.LinkRunner","environment" : {"environment.chrome.version" : "116","environment.id" : "INFRA","environment.hostname" : ""}}'
+
+
+--memory="2g" --cpus="2.0"
+ docker run --platform linux/amd64 -v ~/.aws-lambda-rie:/aws-lambda -p 9000:8080 \
+ --entrypoint /aws-lambda/aws-lambda-rie \
+ lambdatestng:chrome \
+ /usr/bin/java -cp './*' com.amazonaws.services.lambda.runtime.api.client.AWSLambda org.lambda.testng.main.LambdaTestNgRunner::runTest
+
+
+ mkdir -p ~/.aws-lambda-rie && \
+     curl -Lo ~/.aws-lambda-rie/aws-lambda-rie https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie-arm64 && \
+     chmod +x ~/.aws-lambda-rie/aws-lambda-rie
+
+         System.setProperty("environment.id", "local");
+         System.setProperty("environment.hostname", "");
